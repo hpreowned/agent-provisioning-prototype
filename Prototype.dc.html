@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent provisioning — clickable prototype (wizard create, single-shell edit)</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2B5BB5}a:hover{color:#1C3A6B}
+.ui{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#1F2937;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.4}
+.ui *{box-sizing:border-box}
+.lbl{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#374151;margin:0 0 6px}
+.opt{font-weight:400;color:#6B7280}
+.fld{display:flex;flex-direction:column;min-width:0}
+.in{display:block;width:100%;height:40px;padding:0 12px;border:1px solid #CBD2DC;border-radius:8px;background:#fff;font:inherit;font-size:14px;color:#1F2937;appearance:none;-webkit-appearance:none}
+.in:focus{outline:2px solid #2F6BD8;outline-offset:-1px}
+.in.ph{color:#8A94A3}
+.sel{position:relative}
+.sel .in{padding-right:36px}
+.sel svg{position:absolute;right:12px;top:12px;pointer-events:none;color:#5B6472}
+textarea.in{height:72px;padding:10px 12px;resize:vertical}
+.help{font-size:12px;color:#5B6472;margin:6px 0 0}
+.mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.h2{font-size:16px;font-weight:600;color:#111827;margin:0;display:flex;align-items:center;gap:6px}
+.sub{font-size:13px;color:#5B6472;margin:2px 0 0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
+.wiz{max-width:760px;margin:0 auto;padding:36px 24px;display:flex;flex-direction:column;gap:36px}
+.full{padding:28px 44px 28px 36px;display:flex;flex-direction:column;gap:36px}
+.navb{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 12px;border-radius:8px;border:0;background:transparent;color:#374151;font:inherit;font-size:13.5px;font-weight:500;text-align:left;cursor:pointer}
+.navb.on{background:#E3ECFA;color:#1C3A6B}
+.navb:hover{color:#1C3A6B}
+.tag{margin-left:auto;font-size:11px;font-weight:500;color:#8A94A3}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 18px;border-radius:8px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;border:1px solid transparent}
+.btn-p{background:#2F6BD8;color:#fff}.btn-p:hover{background:#2559BD}
+.btn-p:disabled{background:#9DB8F0;color:#fff;cursor:default}
+.btn-o{background:#fff;color:#1C3A6B;border-color:#B9C4D4}.btn-o:hover{background:#F3F6FA}
+.btn-t{background:transparent;color:#2B5BB5;padding:0 10px;height:32px;font-weight:500}.btn-t:hover{background:#E3ECFA}
+.ico{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:#5B6472;cursor:pointer;padding:0}
+.ico:hover{background:#EEF1F5;color:#1F2937}
+.chip{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:14px;background:#EEF1F5;color:#374151;font-size:12.5px}
+.rc{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border:1px solid #CBD2DC;border-radius:8px;background:#fff;font-size:14px;cursor:pointer}
+.rc.on{border-color:#2F6BD8;background:#F3F7FE;box-shadow:inset 0 0 0 1px #2F6BD8}
+.ck{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid #CBD2DC;border-radius:8px;font-size:14px;cursor:pointer;background:#fff}
+.ck.on{border-color:#2F6BD8;background:#F3F7FE}
+input[type=checkbox],input[type=radio]{accent-color:#2F6BD8;width:16px;height:16px;margin:0}
+.info{display:inline-flex;color:#5B6472}
+.step{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;color:#8A94A3;white-space:nowrap;border:0;background:transparent;font-family:inherit;padding:0;cursor:pointer}
+.step .no{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;border:1.5px solid #C3CAD5;font-size:12.5px;font-weight:600;color:#6B7280;background:#fff}
+.step.done{color:#374151}
+.step.done .no{border-color:#1E7B3A;background:#1E7B3A;color:#fff}
+.step.on{color:#1C3A6B;font-weight:600}
+.step.on .no{border-color:#1C3A6B;background:#1C3A6B;color:#fff}
+.line{flex:1;height:1.5px;background:#DCE1E8;margin:0 6px}
+.line.done{background:#1E7B3A}
+.rv{display:grid;grid-template-columns:180px minmax(0,1fr) auto;gap:16px;align-items:start;padding:14px 0;border-top:1px solid #E5E8EE}
+.rv .l{font-size:13px;font-weight:600;color:#111827;padding-top:2px}
+.rv .t{font-size:13.5px;color:#1F2937}
+.rv .s{font-size:12.5px;color:#5B6472;margin-top:2px}
+.ph3{display:flex;align-items:center;gap:8px;height:30px;border-bottom:1px solid #D9E6DC;font-size:13px;font-weight:600;color:#111827}
+.sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ph3 .t{margin-left:auto;font-variant-numeric:tabular-nums;color:#374151}
+.st3{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:13px;color:#1F2937}
+.st3 svg{flex-shrink:0;margin-top:2px}
+.st3 .n{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.st3 .m{font-size:12px;color:#5B6472}
+.st3 .d{font-variant-numeric:tabular-nums;color:#374151;white-space:nowrap}
+.pct{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:9px;background:#FFF1DB;color:#8A4B00;font-size:11px;font-weight:600;white-space:nowrap}
+.gh{display:flex;align-items:center;gap:8px;height:32px;margin-top:10px;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#5B6472}
+.gh .t{margin-left:auto;letter-spacing:0;text-transform:none;font-size:12.5px;font-weight:500;color:#5B6472}
+.st{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:8px;font-size:14px;color:#1F2937}
+.st svg{flex-shrink:0}
+.st .n{flex:1;min-width:0}
+.st .m{color:#5B6472;font-size:13px}
+.st .d{font-variant-numeric:tabular-nums;color:#374151;white-space:nowrap;font-size:13px}
+.st.run{background:#EEF4FD;font-weight:600;color:#1C3A6B}
+.st.run .d{color:#2559BD;font-weight:600}
+.st.wait{color:#8A94A3}.st.wait .d{color:#A3ACB9}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;transform-origin:center}
+.th{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#5B6472}
+.tab{height:46px;padding:0 14px;border:0;background:transparent;font:inherit;font-size:13.5px;font-weight:500;color:#5B6472;border-bottom:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tab.on{color:#1C3A6B;border-bottom-color:#2F6BD8}
+.tab:hover{color:#1C3A6B}
+.mrow{display:flex;flex-direction:column;max-width:72%}
+.mrow.u{align-self:flex-end;align-items:flex-end}
+.mrow.a{align-self:flex-start;align-items:flex-start}
+.bub{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.bub.u{background:#1C3A6B;color:#fff;border-bottom-right-radius:4px}
+.bub.a{background:#F3F5F8;color:#1F2937;border-bottom-left-radius:4px}
+.meta{font-size:11.5px;color:#8A94A3;margin-top:4px}
+.code{margin:0;padding:14px 16px;border-radius:8px;background:#0F1C33;color:#E6EDF7;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;overflow:auto;max-width:100%}
+.seg{display:inline-flex;border:1px solid #CBD2DC;border-radius:8px;overflow:hidden;background:#fff}
+.seg button{height:34px;padding:0 12px;border:0;background:#fff;font:inherit;font-size:13px;font-weight:500;color:#374151;cursor:pointer;border-right:1px solid #CBD2DC}
+.seg button:last-child{border-right:0}
+.seg button.on{background:#E3ECFA;color:#1C3A6B}
+.seg button:disabled{color:#A3ACB9;cursor:default;background:#F7F8FA}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #E5E8EE;font-size:13.5px}
+.kv .k{color:#5B6472;font-size:12.5px;font-weight:500}
+@media (max-width: 1100px){
+.page{padding:24px!important}
+.stepper{padding:0 24px!important}
+.full{padding:24px!important}
+}
+@media (max-width: 900px){
+.enav{display:none!important}
+.pgwrap{flex-direction:column!important}
+.pgwrap>div:first-child{border-right:0!important;border-bottom:1px solid #E5E8EE;min-height:360px}
+.pgside{width:100%!important;max-height:40%}
+.g3{grid-template-columns:1fr!important;gap:12px!important}
+.dstages{max-height:40vh;overflow-y:auto;padding-right:4px}
+.agrid.hd{display:none!important}
+.agrid{grid-template-columns:1fr!important;gap:10px!important}
+.agrid>div:last-child{justify-content:flex-start!important}
+.rv{grid-template-columns:1fr!important;gap:4px!important}
+.kv{grid-template-columns:1fr;gap:4px}
+.mrow{max-width:90%}
+.step{font-size:0;gap:0}
+.step .no{font-size:12.5px}
+.line{margin:0 8px}
+}
+@media (max-width: 640px){
+.page{padding:20px 16px!important}
+.ovl{padding:0!important}
+.modal{border-radius:0!important;height:100%!important;min-height:0!important;max-height:100%!important;box-shadow:none!important}
+.grid2{grid-template-columns:1fr}
+.wiz{padding:24px 16px;gap:28px}
+.full{padding:20px 16px!important;gap:28px}
+.pgwrap>div:first-child>div{padding-left:16px!important;padding-right:16px!important}
+.pgside{padding:16px!important}
+.mfoot{height:auto!important;min-height:60px;padding:10px 16px!important;gap:8px!important;flex-wrap:wrap}
+.mfoot .help{display:none}
+.mfoot .btn-t{padding:0 6px;font-size:12.5px}
+.mfoot .btn{height:36px;padding:0 14px}
+.mfoot{justify-content:flex-end}
+.mhead{padding:0 8px 0 16px!important;gap:10px!important}
+.mhead h2{white-space:nowrap;font-size:16px}
+.mname,.dmeta{display:none!important}
+.dstrip{height:auto!important;min-height:44px;flex-wrap:wrap;gap:6px 10px!important;padding:8px 0}
+.plegend{flex-wrap:wrap;gap:6px 14px!important}
+.plegend>span{white-space:nowrap}
+.pgbar{height:auto!important;flex-wrap:wrap;padding:8px 16px!important;gap:4px 8px!important;line-height:1.5}
+.pubwrap{padding:20px 16px 16px!important}
+.dwrap{padding:0 16px!important}
+}
+</style>
+</helmet>
+<div class="ui shell" style="width: 100%; min-height: 100vh; background: #F3F5F8; position: relative; display: flex; flex-direction: column">
+
+<div style="height: 56px; background: #1C3A6B; display: flex; align-items: center; gap: 10px; padding: 0 32px; flex-shrink: 0; color: #fff; font-size: 14px">
+<span style="font-weight: 600">[Platform]</span>
+<span style="color: rgba(255,255,255,.5)">/</span>
+<span style="color: rgba(255,255,255,.85)">Agents</span>
+</div>
+
+<div class="page" style="flex: 1; padding: 36px 48px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; align-items: center; gap: 12px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #111827">Agents</h1>
+<button class="btn btn-p" style="margin-left: auto" onClick="{{ startCreate }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Create Agent</button>
+</div>
+
+<sc-if value="{{ noAgent }}" hint-placeholder-val="{{ true }}">
+<div style="border: 1px dashed #CBD2DC; border-radius: 12px; padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #fff">
+<span style="font-size: 15px; font-weight: 600; color: #111827">No agents in DEV yet</span>
+<span style="font-size: 13px; color: #5B6472">Create one to provision it on Foundry.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasAgent }}" hint-placeholder-val="{{ false }}">
+<div style="background: #fff; border: 1px solid #E5E8EE; border-radius: 12px; overflow: hidden">
+<div class="agrid hd" style="display: grid; grid-template-columns: 2fr 1.2fr 1.6fr 1fr; gap: 16px; padding: 12px 20px; border-bottom: 1px solid #E5E8EE; background: #F7F8FA"><span class="th">Agent</span><span class="th">Type · Env</span><span class="th">Deployment</span><span class="th"></span></div>
+<div class="agrid" style="display: grid; grid-template-columns: 2fr 1.2fr 1.6fr 1fr; gap: 16px; padding: 16px 20px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600; color: #111827">{{ name }}</span><span style="font-size: 12.5px; color: #5B6472">{{ desc }}</span></div>
+<span style="font-size: 13.5px">{{ type }} · {{ env }}</span>
+<div style="display: flex; align-items: center; gap: 8px">
+<sc-if value="{{ pubActive }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg><span style="font-size: 13.5px; color: #1C3A6B; font-weight: 500">Publishing v{{ targetVersion }} · {{ pubElapsedText }}</span></sc-if>
+<sc-if value="{{ pubIdle }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 12.5l2.3 2.3 4.7-5"></path></svg><span style="font-size: 13.5px">v{{ version }} published · {{ lastTotal }}</span></sc-if>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-t" style="height: 36px" onClick="{{ openPlayground }}">Playground</button><button class="btn btn-o" style="height: 36px" onClick="{{ openEdit }}">Edit</button></div>
+</div>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ overlay }}" hint-placeholder-val="{{ false }}">
+<div class="ovl" style="position: fixed; inset: 0; background: rgba(20,30,48,.58); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto">
+<div class="modal" style="width: min(1200px, 100%); min-height: min(700px, 100%); max-height: 100%; background: #fff; border-radius: 12px; box-shadow: 0 24px 64px rgba(10,20,40,.45); display: flex; flex-direction: column; overflow: hidden">
+
+<div class="mhead" style="height: 60px; background: #1C3A6B; display: flex; align-items: center; gap: 14px; padding: 0 16px 0 28px; flex-shrink: 0">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600; color: #fff">{{ modalTitle }}</h2>
+<sc-if value="{{ notCreate }}" hint-placeholder-val="{{ false }}">
+<span class="mname" style="width: 1px; height: 20px; background: rgba(255,255,255,.25)"></span>
+<span class="mname" style="font-size: 14px; color: rgba(255,255,255,.8)">{{ nameOrPlaceholder }}</span>
+<span style="margin-left: auto; display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 13px; background: rgba(255,255,255,.14); color: #fff; font-size: 12.5px; font-weight: 500">{{ type }} · {{ env }}</span>
+</sc-if>
+<sc-if value="{{ isCreate }}" hint-placeholder-val="{{ true }}">
+<span style="margin-left: auto; font-size: 13px; color: rgba(255,255,255,.8)">Step {{ step }} of 4</span>
+</sc-if>
+<button class="ico" aria-label="Close" style="color: #fff" onClick="{{ closeModal }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ false }}">
+
+<sc-if value="{{ isCreate }}" hint-placeholder-val="{{ true }}">
+<div class="stepper" style="height: 64px; border-bottom: 1px solid #E5E8EE; background: #F7F8FA; display: flex; align-items: center; padding: 0 48px; flex-shrink: 0" role="list" aria-label="Steps">
+<sc-for list="{{ stepItems }}" as="item" hint-placeholder-count="4">
+<button class="{{ item.cls }}" role="listitem" onClick="{{ item.go }}"><span class="no"><sc-if value="{{ item.showCheck }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg></sc-if><sc-if value="{{ item.showNum }}" hint-placeholder-val="{{ true }}">{{ item.num }}</sc-if></span>{{ item.label }}</button>
+<sc-if value="{{ item.hasLine }}" hint-placeholder-val="{{ true }}"><span class="{{ item.lineCls }}"></span></sc-if>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+<div class="dwrap" style="background: #F2F8F3; border-bottom: 1px solid #D9E6DC; padding: 0 20px 0 28px; display: flex; flex-direction: column; flex-shrink: 0">
+<div class="dstrip" style="display: flex; align-items: center; gap: 12px; height: 52px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 12.5l2.3 2.3 4.7-5"></path></svg>
+<span class="th">Last deployment</span>
+<span style="font-size: 14px; font-weight: 600; color: #1E7B3A">Version {{ version }} published in {{ lastTotal }}</span>
+<span class="dmeta" style="color: #A3ACB9">·</span>
+<span class="dmeta" style="font-size: 13px; color: #5B6472">{{ repoText }} · {{ branchText }} @ <span class="mono">9f113e7</span></span>
+<button class="btn btn-t" style="margin-left: auto" onClick="{{ toggleStages }}">{{ stagesLabel }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{ chevRot }}deg)"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+<sc-if value="{{ stagesOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dstages" style="display: flex; flex-direction: column; gap: 14px; padding: 2px 0 18px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px" role="img" aria-label="Time by phase: fetch source 3.3 seconds, build and provision 48.8 seconds, finalize 18.4 seconds">
+<div style="flex: 0 0 4.6%; background: #9DB8F0"></div>
+<div style="flex: 0 0 69.2%; background: #2F6BD8"></div>
+<div style="flex: 1; background: #1E7B3A"></div>
+</div>
+<div class="plegend" style="display: flex; gap: 20px; font-size: 12.5px; color: #374151">
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #9DB8F0"></span>Fetch source · 3.3 s</span>
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #2F6BD8"></span>Build &amp; provision · 48.8 s</span>
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #1E7B3A"></span>Finalize · 18.4 s</span>
+<span style="margin-left: auto; color: #5B6472">Total {{ lastTotal }}</span>
+</div>
+</div>
+<div class="g3" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px">
+<div style="display: flex; flex-direction: column">
+<div class="ph3"><span class="sw" style="background: #9DB8F0"></span>Fetch source<span class="t">3.3 s</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Validate request</span></div><span class="d">763 ms</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Authenticate with GitHub</span></div><span class="d">1.0 s</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Resolve branch commit</span><span class="m">{{ branchText }} @ <span class="mono">9f113e7</span></span></div><span class="d">536 ms</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Download source</span><span class="m">3 files · 744 B</span></div><span class="d">894 ms</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Package source</span></div><span class="d">62 ms</span></div>
+</div>
+<div style="display: flex; flex-direction: column">
+<div class="ph3"><span class="sw" style="background: #2F6BD8"></span>Build &amp; provision<span class="t">48.8 s</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Upload to Foundry</span></div><span class="d">4.5 s</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span style="display: flex; align-items: center; gap: 8px; font-weight: 600">Foundry provisioning <span class="pct">63% of total</span></span><span class="m">Foundry version {{ version }}</span></div><span class="d" style="font-weight: 600">44.3 s</span></div>
+</div>
+<div style="display: flex; flex-direction: column">
+<div class="ph3"><span class="sw" style="background: #1E7B3A"></span>Finalize<span class="t">18.4 s</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Save configuration</span></div><span class="d">934 ms</span></div>
+<div class="st3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg><div class="n"><span>Readiness check (cold start)</span><span class="m">First response in 17.4 s</span></div><span class="d">17.5 s</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+<div style="height: 46px; border-bottom: 1px solid #E5E8EE; display: flex; align-items: stretch; gap: 4px; padding: 0 28px; flex-shrink: 0" role="tablist">
+<button class="{{ tabConfigureCls }}" role="tab" onClick="{{ goConfigure }}">Configure</button>
+<button class="{{ tabPlaygroundCls }}" role="tab" onClick="{{ goPlayground }}">Playground</button>
+<button class="{{ tabConsumeCls }}" role="tab" onClick="{{ goConsume }}">Consume</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ showConfigure }}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; display: flex; min-height: 0">
+<sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+<nav class="enav" aria-label="Sections" style="width: 232px; flex-shrink: 0; background: #F7F8FA; border-right: 1px solid #E5E8EE; padding: 20px 12px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+<button class="{{ item.cls }}" onClick="{{ item.go }}">{{ item.label }}<sc-if value="{{ item.optional }}" hint-placeholder-val="{{ false }}"><span class="tag">Optional</span></sc-if></button>
+</sc-for>
+</nav>
+</sc-if>
+
+<div id="scrollbody" onScroll="{{ onScroll }}" style="flex: 1; min-width: 0; position: relative; overflow-y: auto; overflow-x: hidden">
+<div class="{{ bodyCls }}">
+
+<sc-if value="{{ showBasics }}" hint-placeholder-val="{{ true }}">
+<section id="sec-basics" data-sec="basics" style="display: flex; flex-direction: column; gap: 18px">
+<h3 class="h2">Basics</h3>
+<div class="grid2">
+<div class="fld"><label class="lbl" for="p-env">Env</label><div class="sel"><select class="in" id="p-env" value="{{ env }}" onChange="{{ onEnv }}"><option value="DEV">DEV</option><option value="QA">QA</option><option value="PROD">PROD</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld"><label class="lbl" for="p-proj">Project</label><div class="sel"><select class="{{ projectCls }}" id="p-proj" value="{{ project }}" onChange="{{ onProject }}"><option value="">Select a project</option><option value="[Project A]">[Project A]</option><option value="[Project B]">[Project B]</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld"><label class="lbl" for="p-name">Agent Name</label><input class="in" id="p-name" value="{{ name }}" onChange="{{ onName }}" placeholder="e.g. GithubSourcedAgent"></div>
+<div class="fld"><label class="lbl" for="p-type">Agent Type</label><div class="sel"><select class="in" id="p-type" value="{{ type }}" onChange="{{ onType }}"><option value="Hosted">Hosted</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld" style="grid-column: 1 / -1"><label class="lbl" for="p-desc">Agent Description</label><textarea class="in" id="p-desc" value="{{ desc }}" onChange="{{ onDesc }}" placeholder="What this agent does"></textarea></div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ showSource }}" hint-placeholder-val="{{ false }}">
+<section id="sec-source" data-sec="source" style="display: flex; flex-direction: column; gap: 18px">
+<div><h3 class="h2">Source &amp; runtime</h3><p class="sub">Source-code hosted agents are deployed from a GitHub repository.</p></div>
+<div class="fld">
+<span class="lbl">Deployment Method</span>
+<div class="grid2" style="gap: 12px">
+<label class="{{ rcContainer }}"><input type="radio" name="p-dm" checked="{{ isContainer }}" onChange="{{ pickContainer }}"> Container Image</label>
+<label class="{{ rcSource }}"><input type="radio" name="p-dm" checked="{{ isSource }}" onChange="{{ pickSource }}"> Source Code (GitHub repository)</label>
+</div>
+</div>
+<sc-if value="{{ isContainer }}" hint-placeholder-val="{{ false }}">
+<div style="height: 56px; border: 1px dashed #CBD2DC; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #5B6472">[Container image fields — not part of this prototype]</div>
+</sc-if>
+<sc-if value="{{ isSource }}" hint-placeholder-val="{{ true }}">
+<div class="grid2">
+<div class="fld"><label class="lbl" for="p-repo">GitHub Repository</label><input class="in" id="p-repo" value="{{ repo }}" onChange="{{ onRepo }}" placeholder="org/repository"><p class="help">The GitHub App must have access to the repository.</p></div>
+<div class="fld"><label class="lbl" for="p-branch">Branch <span class="opt">(optional)</span></label><input class="in" id="p-branch" value="{{ branch }}" onChange="{{ onBranch }}" placeholder="main"><p class="help">Defaults to main.</p></div>
+<div class="fld"><label class="lbl" for="p-rt">Runtime</label><div class="sel"><select class="in" id="p-rt" value="{{ runtime }}" onChange="{{ onRuntime }}"><option value="Python 3.14">Python 3.14</option><option value="Python 3.13">Python 3.13</option><option value="Node 22">Node 22</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld"><label class="lbl" for="p-dep">Dependency Resolution</label><div class="sel"><select class="in" id="p-dep" value="{{ dep }}" onChange="{{ onDep }}"><option value="Remote build (dependencies installed server-side)">Remote build (dependencies installed server-side)</option><option value="Pre-built (dependencies in repository)">Pre-built (dependencies in repository)</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld" style="grid-column: 1 / -1"><label class="lbl" for="p-ep">Entry Point</label><input class="in" id="p-ep" value="{{ entry }}" onChange="{{ onEntry }}" placeholder="python main.py"><p class="help">Command: <span class="mono">{{ commandText }}</span></p></div>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ showResources }}" hint-placeholder-val="{{ false }}">
+<section id="sec-resources" data-sec="resources" style="display: flex; flex-direction: column; gap: 18px">
+<h3 class="h2">Resources</h3>
+<div class="grid2">
+<div class="fld"><label class="lbl" for="p-cpu">CPU Allocation <span class="info" role="img" aria-label="More information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></span></label><div class="sel"><select class="in" id="p-cpu" value="{{ cpu }}" onChange="{{ onCpu }}"><option value="1 vCPU - Standard tasks (recommended)">1 vCPU - Standard tasks (recommended)</option><option value="2 vCPU - Heavier workloads">2 vCPU - Heavier workloads</option><option value="4 vCPU - Compute intensive">4 vCPU - Compute intensive</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="fld"><label class="lbl" for="p-mem">Memory Allocation <span class="info" role="img" aria-label="More information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></span></label><div class="sel"><select class="in" id="p-mem" value="{{ mem }}" onChange="{{ onMem }}"><option value="2 GiB - Standard tasks (recommended)">2 GiB - Standard tasks (recommended)</option><option value="4 GiB - Heavier workloads">4 GiB - Heavier workloads</option><option value="8 GiB - Memory intensive">8 GiB - Memory intensive</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+</div>
+</section>
+
+<section id="sec-protocols" data-sec="protocols" style="display: flex; flex-direction: column; gap: 18px">
+<h3 class="h2">Protocols</h3>
+<div class="fld">
+<span class="lbl">Hosted Protocols <span class="info" role="img" aria-label="More information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></span></span>
+<div style="display: flex; gap: 12px">
+<label class="{{ ckResp }}"><input type="checkbox" checked="{{ pResp }}" onChange="{{ toggleResp }}"> Responses</label>
+<label class="{{ ckInv }}"><input type="checkbox" checked="{{ pInv }}" onChange="{{ toggleInv }}"> Invocations</label>
+<label class="{{ ckWs }}"><input type="checkbox" checked="{{ pWs }}" onChange="{{ toggleWs }}"> Invocations_WS</label>
+</div>
+<p class="help">Select at least one.</p>
+</div>
+</section>
+
+<section id="sec-envvars" data-sec="envvars" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h3 class="h2">Environment variables <span class="opt" style="font-size: 13px">(optional)</span> <span class="info" role="img" aria-label="More information"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></span></h3>
+<button class="btn btn-t" onClick="{{ addVar }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Add Variable</button>
+</div>
+<sc-if value="{{ noVars }}" hint-placeholder-val="{{ true }}">
+<div style="height: 56px; border: 1px dashed #CBD2DC; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #5B6472">No variables added.</div>
+</sc-if>
+<sc-if value="{{ hasVars }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{ envVars }}" as="item" hint-placeholder-count="1">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px; gap: 12px; align-items: end">
+<label class="fld"><span class="lbl">Key</span><input class="in mono" style="font-size: 13px" value="{{ item.key }}" onChange="{{ item.onKey }}" placeholder="KEY"></label>
+<label class="fld"><span class="lbl">Value</span><input class="in mono" style="font-size: 13px" value="{{ item.value }}" onChange="{{ item.onValue }}" placeholder="value"></label>
+<button class="ico" aria-label="Remove variable" style="margin-bottom: 4px" onClick="{{ item.remove }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ showRegistry }}" hint-placeholder-val="{{ false }}">
+<section id="sec-registry" data-sec="registry" style="display: flex; flex-direction: column; gap: 18px">
+<h3 class="h2">Solution registry</h3>
+<div class="fld"><label class="lbl" for="p-sol">Solution Registry</label><div class="sel"><select class="{{ solutionCls }}" id="p-sol" value="{{ solution }}" onChange="{{ onSolution }}"><option value="">Select a solution</option><option value="[Solution A (Tech 2)]">[Solution A (Tech 2)]</option><option value="[Solution B (Tech 1)]">[Solution B (Tech 1)]</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div><p class="help">EAI, DPC and Project are inherited from the selected solution.</p></div>
+<sc-if value="{{ hasSolution }}" hint-placeholder-val="{{ false }}">
+<div class="fld">
+<span class="lbl" style="margin-bottom: 8px">Inherited from solution</span>
+<div style="display: flex; gap: 8px">
+<span class="chip">EAI: 13882</span>
+<span class="chip">DPC: 13882</span>
+<span class="chip">Project: {{ project }}</span>
+</div>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ showReview }}" hint-placeholder-val="{{ false }}">
+<section style="display: flex; flex-direction: column; gap: 12px">
+<div><h3 class="h2">Review</h3><p class="sub">Creating the agent publishes version 1 straight away.</p></div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{ reviewRows }}" as="r" hint-placeholder-count="3">
+<div class="rv"><span class="l">{{ r.label }}</span><div><div class="t">{{ r.text }}</div><div class="s">{{ r.sub }}</div></div><button class="btn btn-t" onClick="{{ r.go }}">Edit</button></div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ isCreate }}" hint-placeholder-val="{{ true }}">
+<div class="mfoot" style="height: 68px; border-top: 1px solid #E5E8EE; background: #fff; display: flex; align-items: center; gap: 12px; padding: 0 28px; flex-shrink: 0">
+<sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}"><button class="btn btn-o" onClick="{{ backStep }}">Back</button></sc-if>
+<span class="help" style="margin: 0 0 0 4px">{{ stepHint }}</span>
+<button class="btn btn-t" style="color: #8A94A3" onClick="{{ fillSample }}">Prototype: fill sample values</button>
+<sc-if value="{{ showNext }}" hint-placeholder-val="{{ true }}"><button class="btn btn-p" style="margin-left: auto" disabled="{{ nextDisabled }}" onClick="{{ nextStep }}">Next: {{ nextLabel }} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-if>
+<sc-if value="{{ showCreate }}" hint-placeholder-val="{{ false }}"><button class="btn btn-p" style="margin-left: auto" disabled="{{ createDisabled }}" onClick="{{ publish }}">Create Agent</button></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+<div class="mfoot" style="height: 68px; border-top: 1px solid #E5E8EE; background: #fff; display: flex; align-items: center; gap: 12px; padding: 0 28px; flex-shrink: 0">
+<span class="help" style="margin: 0">{{ footerHint }}</span>
+<button class="btn btn-o" style="margin-left: auto" onClick="{{ closeModal }}">Close</button>
+<button class="btn btn-p" disabled="{{ updateDisabled }}" onClick="{{ publish }}">Update Agent</button>
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ showPlayground }}" hint-placeholder-val="{{ false }}">
+<div class="pgwrap" style="flex: 1; display: flex; min-height: 480px">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid #E5E8EE">
+<div class="pgbar" style="height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 28px; border-bottom: 1px solid #E5E8EE; font-size: 13px; color: #374151; flex-shrink: 0"><span style="width: 8px; height: 8px; border-radius: 4px; background: #1E7B3A"></span>Agent is running · v{{ version }} · {{ playProto }} · first response in 17.4 s<button class="btn btn-t" style="margin-left: auto" onClick="{{ clearChat }}">Clear</button></div>
+<div id="transcript" style="flex: 1; min-height: 0; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px">
+<sc-if value="{{ noMessages }}" hint-placeholder-val="{{ true }}">
+<div style="margin: auto; text-align: center; display: flex; flex-direction: column; gap: 6px; color: #5B6472; font-size: 13.5px"><span style="font-weight: 600; color: #111827; font-size: 15px">Send a message to verify the agent responds</span><span>Replies come from the published version over the selected protocol.</span></div>
+</sc-if>
+<sc-for list="{{ messages }}" as="m" hint-placeholder-count="2">
+<div class="{{ m.rowCls }}">
+<div class="{{ m.bubCls }}">{{ m.text }}</div>
+<span class="meta">{{ m.meta }}</span>
+<sc-if value="{{ m.showRaw }}" hint-placeholder-val="{{ false }}"><pre class="code" style="margin-top: 6px; font-size: 12px">{{ m.raw }}</pre></sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ thinking }}" hint-placeholder-val="{{ false }}">
+<div class="mrow a"><div class="bub a" style="display: flex; align-items: center; gap: 8px; color: #5B6472"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg>Agent is responding…</div></div>
+</sc-if>
+</div>
+<div style="padding: 14px 28px 18px; border-top: 1px solid #E5E8EE; display: flex; gap: 12px; align-items: flex-end; flex-shrink: 0">
+<label class="fld" style="flex: 1"><span class="lbl">Message</span><textarea class="in" style="height: 56px" value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onDraftKey }}" placeholder="Ask the agent something… (Enter to send, Shift+Enter for a new line)"></textarea></label>
+<button class="btn btn-p" disabled="{{ sendDisabled }}" onClick="{{ sendMessage }}">Send</button>
+</div>
+</div>
+<aside class="pgside" style="width: 320px; flex-shrink: 0; padding: 24px; display: flex; flex-direction: column; gap: 20px; background: #F7F8FA; overflow-y: auto">
+<div class="fld"><label class="lbl" for="pg-proto">Protocol</label><div class="sel"><select class="in" id="pg-proto" value="{{ playProto }}" onChange="{{ onPlayProto }}"><sc-for list="{{ enabledProtocols }}" as="p" hint-placeholder-count="1"><option value="{{ p.name }}">{{ p.name }}</option></sc-for></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></div><p class="help">Only protocols enabled in Configure are listed.</p></div>
+<label class="{{ rawCls }}"><input type="checkbox" checked="{{ showRaw }}" onChange="{{ toggleRaw }}"> Show raw response</label>
+<div class="fld"><span class="lbl">Last response</span><span style="font-size: 22px; font-weight: 600; color: #111827; font-variant-numeric: tabular-nums">{{ lastLatency }}</span><p class="help">{{ lastLatencyNote }}</p></div>
+<div class="fld"><span class="lbl">Checks</span><div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px"><span style="display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg>Version {{ version }} published</span><span style="display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg>Readiness check passed · 17.4 s</span><span style="display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg>{{ cpu }} · {{ mem }}</span></div></div>
+</aside>
+</div>
+<div class="mfoot" style="height: 68px; border-top: 1px solid #E5E8EE; background: #fff; display: flex; align-items: center; gap: 12px; padding: 0 28px; flex-shrink: 0">
+<span class="help" style="margin: 0">Messages here go to the published agent; nothing is saved to the configuration.</span>
+<button class="btn btn-o" style="margin-left: auto" onClick="{{ closeModal }}">Close</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ showConsume }}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; overflow-y: auto; padding: 24px 36px 28px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column">
+<div class="kv"><span class="k">Agent ID</span><span class="mono" style="font-size: 13px">{{ agentId }}</span><button class="btn btn-t" onClick="{{ copyId }}">Copy</button></div>
+<div class="kv"><span class="k">Endpoint</span><span class="mono" style="font-size: 13px">{{ endpoint }}</span><button class="btn btn-t" onClick="{{ copyEndpoint }}">Copy</button></div>
+<div class="kv"><span class="k">Authentication</span><span>Bearer token from [identity provider] · scope [agent-invoke]</span><span></span></div>
+<div class="kv" style="border-bottom: 0"><span class="k">Enabled protocols</span><div style="display: flex; gap: 8px"><sc-for list="{{ enabledProtocols }}" as="p" hint-placeholder-count="1"><span class="chip">{{ p.name }}</span></sc-for></div><span></span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+<div class="seg" role="tablist" aria-label="Protocol">
+<button class="{{ segResp }}" role="tab" disabled="{{ respOff }}" onClick="{{ pickResp }}">Responses</button>
+<button class="{{ segInv }}" role="tab" disabled="{{ invOff }}" onClick="{{ pickInv }}">Invocations</button>
+<button class="{{ segWs }}" role="tab" disabled="{{ wsOff }}" onClick="{{ pickWs }}">Invocations_WS</button>
+</div>
+<span class="help" style="margin: 0">Greyed-out protocols are not enabled for this agent.</span>
+<div class="seg" role="tablist" aria-label="Language" style="margin-left: auto">
+<button class="{{ segCurl }}" role="tab" onClick="{{ pickCurl }}">cURL</button>
+<button class="{{ segPy }}" role="tab" onClick="{{ pickPy }}">Python</button>
+<button class="{{ segTs }}" role="tab" onClick="{{ pickTs }}">TypeScript</button>
+</div>
+</div>
+<div style="position: relative"><pre class="code">{{ codeText }}</pre><button class="btn btn-t" style="position: absolute; top: 8px; right: 8px; color: #C9D6EE" onClick="{{ copyCode }}">Copy</button></div>
+<p class="help" style="margin: 0">Samples are generated from this agent's configuration (version {{ version }}, {{ consumeProto }}). Host, token and scope are placeholders until the gateway supplies the real values.</p>
+</div>
+<div class="mfoot" style="height: 68px; border-top: 1px solid #E5E8EE; background: #fff; display: flex; align-items: center; gap: 12px; padding: 0 28px; flex-shrink: 0">
+<span class="help" style="margin: 0">Re-publishing does not change the endpoint; only the version behind it.</span>
+<button class="btn btn-o" style="margin-left: auto" onClick="{{ closeModal }}">Close</button>
+</div>
+</sc-if>
+
+</sc-if>
+
+<sc-if value="{{ isPublishing }}" hint-placeholder-val="{{ false }}">
+<div class="pubwrap" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; justify-content: center; padding: 36px 48px 24px">
+<div style="width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 22px">
+
+<div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<sc-if value="{{ pubActive }}" hint-placeholder-val="{{ true }}"><svg class="spin" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg></sc-if>
+<sc-if value="{{ pubDone }}" hint-placeholder-val="{{ false }}"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 12.5l2.3 2.3 4.7-5"></path></svg></sc-if>
+<div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0">
+<h3 style="margin: 0; font-size: 20px; font-weight: 600; color: #111827; white-space: nowrap">{{ pubTitle }}</h3>
+<p class="help" style="font-size: 13px; margin: 0">{{ pubSubtitle }}</p>
+</div>
+<span style="margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end"><span class="chip">{{ repoText }} · {{ branchText }} @ <span class="mono" style="margin-left: 4px">9f113e7</span></span>
+<span class="chip" style="background: #FFF1DB; color: #8A4B00">Prototype: 8× speed</span></span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px" role="img" aria-label="Publishing progress by phase">
+<div style="flex: 0 0 4.6%; background: #DCE6F7; display: flex"><div style="width: {{ fetchFill }}%; background: #9DB8F0"></div></div>
+<div style="flex: 0 0 69.2%; background: #DCE6F7; display: flex"><div style="width: {{ buildFill }}%; background: #2F6BD8"></div></div>
+<div style="flex: 1; background: #E3EEE6; display: flex"><div style="width: {{ finalFill }}%; background: #1E7B3A"></div></div>
+</div>
+<div class="plegend" style="display: flex; gap: 20px; font-size: 12.5px; color: #374151">
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #9DB8F0"></span>Fetch source · {{ fetchText }}</span>
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #2F6BD8"></span>Build &amp; provision · {{ buildText }}</span>
+<span style="display: flex; align-items: center; gap: 6px"><span class="sw" style="background: #1E7B3A"></span>Finalize · {{ finalText }}</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column">
+<div class="gh"><span class="sw" style="background: #9DB8F0"></span>Fetch source<span class="t">{{ fetchText }}</span></div>
+<sc-for list="{{ fetchRows }}" as="r" hint-placeholder-count="5">
+<div class="{{ r.cls }}">
+<sc-if value="{{ r.isDone }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg></sc-if>
+<sc-if value="{{ r.isRun }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg></sc-if>
+<sc-if value="{{ r.isWait }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3CAD5" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle></svg></sc-if>
+<span class="n">{{ r.name }} <span class="m">{{ r.metaText }}</span></span><span class="d">{{ r.dur }}</span>
+</div>
+</sc-for>
+<div class="gh"><span class="sw" style="background: #2F6BD8"></span>Build &amp; provision<span class="t">{{ buildText }}</span></div>
+<sc-for list="{{ buildRows }}" as="r" hint-placeholder-count="2">
+<div class="{{ r.cls }}">
+<sc-if value="{{ r.isDone }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg></sc-if>
+<sc-if value="{{ r.isRun }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg></sc-if>
+<sc-if value="{{ r.isWait }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3CAD5" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle></svg></sc-if>
+<span class="n">{{ r.name }} <span class="m">{{ r.metaText }}</span></span><span class="d">{{ r.dur }}</span>
+</div>
+</sc-for>
+<div class="gh"><span class="sw" style="background: #1E7B3A"></span>Finalize<span class="t">{{ finalText }}</span></div>
+<sc-for list="{{ finalRows }}" as="r" hint-placeholder-count="2">
+<div class="{{ r.cls }}">
+<sc-if value="{{ r.isDone }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4 4 10-10"></path></svg></sc-if>
+<sc-if value="{{ r.isRun }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F6BD8" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-6.4 2.6"></path></svg></sc-if>
+<sc-if value="{{ r.isWait }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C3CAD5" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle></svg></sc-if>
+<span class="n">{{ r.name }} <span class="m">{{ r.metaText }}</span></span><span class="d">{{ r.dur }}</span>
+</div>
+</sc-for>
+</div>
+
+</div>
+</div>
+
+<div class="mfoot" style="height: 68px; border-top: 1px solid #E5E8EE; background: #fff; display: flex; align-items: center; gap: 12px; padding: 0 28px; flex-shrink: 0">
+<span class="help" style="margin: 0">{{ pubFooterHint }}</span>
+<button class="btn btn-o" style="margin-left: auto" onClick="{{ closeModal }}">Close</button>
+<sc-if value="{{ pubActive }}" hint-placeholder-val="{{ true }}"><button class="btn btn-p" disabled="{{ true }}">Publishing…</button></sc-if>
+<sc-if value="{{ pubDone }}" hint-placeholder-val="{{ false }}"><button class="btn btn-o" onClick="{{ finishPublish }}">Open in Edit</button><button class="btn btn-p" onClick="{{ tryPlayground }}">Try in Playground</button></sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      screen: 'list',
+      agent: false,
+      version: 0,
+      lastTotal: '',
+      dirty: false,
+      section: 'basics',
+      step: 1, maxStep: 1,
+      stagesOpen: false,
+      env: 'DEV', project: '', name: '', desc: '', type: 'Hosted',
+      method: 'source', repo: '', branch: 'main', runtime: 'Python 3.14',
+      dep: 'Remote build (dependencies installed server-side)', entry: 'python main.py',
+      cpu: '1 vCPU - Standard tasks (recommended)', mem: '2 GiB - Standard tasks (recommended)',
+      pResp: false, pInv: false, pWs: false,
+      envVars: [],
+      solution: '',
+      pubActive: false, pubDone: false, pubSim: 0, stageIdx: 0, targetVersion: 1,
+      tab: 'configure',
+      messages: [], draft: '', thinking: false, playProto: '', showRaw: false, lastLatency: 0, msgCount: 0,
+      consumeProto: '', codeLang: 'curl'
+    };
+    this.lockUntil = 0;
+    this.replyTimer = null;
+  }
+
+  stages() {
+    return [
+      { name: 'Validate request', meta: '', ms: 763 },
+      { name: 'Authenticate with GitHub', meta: '', ms: 1000 },
+      { name: 'Resolve branch commit', meta: 'BRANCH @ 9f113e7', ms: 536 },
+      { name: 'Download source', meta: '3 files · 744 B', ms: 894 },
+      { name: 'Package source', meta: '', ms: 62 },
+      { name: 'Upload to Foundry', meta: '', ms: 4500 },
+      { name: 'Foundry provisioning', meta: 'Foundry version VERSION', ms: 44300 },
+      { name: 'Save configuration', meta: '', ms: 934 },
+      { name: 'Readiness check (cold start)', meta: 'First response in 17.4 s', ms: 17500 }
+    ];
+  }
+
+  fmtMs(ms) { return ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(1) + ' s'; }
+  fmtTotal(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + 'm ' + (s % 60) + 's'; }
+  fmtClock(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+  set(k, v) { const o = {}; o[k] = v; o.dirty = true; this.setState(o); }
+
+  scrollTop() {
+    try { const c = document.getElementById('scrollbody'); if (c) c.scrollTop = 0; } catch (e) {}
+  }
+
+  goStep(n) {
+    if (n < 1 || n > 4) return;
+    this.setState({ step: n, maxStep: Math.max(this.state.maxStep, n) });
+    this.scrollTop();
+  }
+
+  go(id) {
+    this.lockUntil = Date.now() + 800;
+    this.setState({ section: id });
+    try {
+      const c = document.getElementById('scrollbody');
+      const s = document.getElementById('sec-' + id);
+      if (c && s) c.scrollTo({ top: Math.max(0, s.offsetTop - 28), behavior: 'smooth' });
+    } catch (e) {}
+  }
+
+  onScrollSpy(e) {
+    if (this.state.screen !== 'edit') return;
+    if (Date.now() < this.lockUntil) return;
+    const c = e.currentTarget;
+    const secs = c.querySelectorAll('section[data-sec]');
+    let cur = this.state.section;
+    for (let i = 0; i < secs.length; i++) {
+      if (secs[i].offsetTop - c.scrollTop <= 80) cur = secs[i].getAttribute('data-sec');
+    }
+    if (cur !== this.state.section) this.setState({ section: cur });
+  }
+
+  startPublish() {
+    const SPEED = 8;
+    const total = this.stages().reduce((a, s) => a + s.ms, 0);
+    const target = this.state.version + 1;
+    this.setState({ screen: 'publishing', pubActive: true, pubDone: false, pubSim: 0, stageIdx: 0, targetVersion: target, agent: true, stagesOpen: false });
+    const start = Date.now();
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => {
+      const sim = (Date.now() - start) * SPEED;
+      if (sim >= total) {
+        clearInterval(this.timer); this.timer = null;
+        this.setState({ pubActive: false, pubDone: true, pubSim: total, stageIdx: 9, version: target, lastTotal: this.fmtTotal(total), dirty: false });
+        return;
+      }
+      let acc = 0, idx = 0;
+      const st = this.stages();
+      for (let i = 0; i < st.length; i++) { acc += st[i].ms; if (sim < acc) { idx = i; break; } }
+      this.setState({ pubSim: sim, stageIdx: idx });
+    }, 80);
+  }
+
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); if (this.replyTimer) clearTimeout(this.replyTimer); }
+
+  enabledProtocols() {
+    const s = this.state; const out = [];
+    if (s.pResp) out.push('Responses');
+    if (s.pInv) out.push('Invocations');
+    if (s.pWs) out.push('Invocations_WS');
+    return out;
+  }
+
+  effProto(pref) { const en = this.enabledProtocols(); return en.indexOf(pref) >= 0 ? pref : (en[0] || 'Responses'); }
+
+  scrollTranscript() {
+    setTimeout(() => { try { const t = document.getElementById('transcript'); if (t) t.scrollTop = t.scrollHeight; } catch (e) {} }, 0);
+  }
+
+  sendMessage() {
+    const s = this.state; const text = s.draft.trim();
+    if (!text || s.thinking) return;
+    const proto = this.effProto(s.playProto);
+    this.setState({ messages: s.messages.concat([{ role: 'user', text: text, meta: 'You', raw: '' }]), draft: '', thinking: true });
+    this.scrollTranscript();
+    const latency = 900 + Math.round(Math.random() * 1300);
+    if (this.replyTimer) clearTimeout(this.replyTimer);
+    this.replyTimer = setTimeout(() => {
+      const st = this.state; const n = st.msgCount + 1;
+      const who = st.name.trim() || 'the agent';
+      const reply = 'Prototype reply from ' + who + ' (v' + st.version + ', ' + proto + '): received "' + text + '". In the live app the agent output replaces this text.';
+      const raw = JSON.stringify({ id: 'resp_' + String(n).padStart(4, '0'), protocol: proto.toLowerCase(), output: reply, latency_ms: latency }, null, 2);
+      this.setState({ messages: st.messages.concat([{ role: 'agent', text: reply, meta: who + ' · ' + (latency / 1000).toFixed(1) + ' s', raw: raw }]), thinking: false, lastLatency: latency, msgCount: n });
+      this.scrollTranscript();
+    }, latency);
+  }
+
+  codeFor(proto, lang) {
+    const id = '[agent-id]';
+    const host = '[gateway-host]';
+    if (proto === 'Invocations_WS') {
+      const url = 'wss://' + host + '/agents/' + id + '/invocations';
+      if (lang === 'curl') return '# WebSocket: use wscat (npm i -g wscat)\nwscat -c "' + url + '" \\\n  -H "Authorization: Bearer $TOKEN"\n> {"input": "Hello"}';
+      if (lang === 'python') return 'import asyncio, json, websockets\n\nasync def main():\n    async with websockets.connect(\n        "' + url + '",\n        extra_headers={"Authorization": f"Bearer {TOKEN}"},\n    ) as ws:\n        await ws.send(json.dumps({"input": "Hello"}))\n        print(json.loads(await ws.recv())["output"])\n\nasyncio.run(main())';
+      return 'import WebSocket from "ws";\n\nconst ws = new WebSocket("' + url + '", {\n  headers: { Authorization: `Bearer ${token}` },\n});\nws.on("open", () => ws.send(JSON.stringify({ input: "Hello" })));\nws.on("message", (data) => console.log(JSON.parse(data.toString()).output));';
+    }
+    const path = proto === 'Responses' ? 'responses' : 'invocations';
+    const url = 'https://' + host + '/agents/' + id + '/' + path;
+    if (lang === 'curl') return 'curl -X POST "' + url + '" \\\n  -H "Authorization: Bearer $TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"input": "Hello"}\'';
+    if (lang === 'python') return 'import requests\n\nr = requests.post(\n    "' + url + '",\n    headers={"Authorization": f"Bearer {TOKEN}"},\n    json={"input": "Hello"},\n)\nr.raise_for_status()\nprint(r.json()["output"])';
+    return 'const r = await fetch("' + url + '", {\n  method: "POST",\n  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },\n  body: JSON.stringify({ input: "Hello" }),\n});\nconsole.log((await r.json()).output);';
+  }
+
+  copyText(t) { try { navigator.clipboard.writeText(t); } catch (e) {} }
+
+  renderVals() {
+    const s = this.state;
+    const st = this.stages();
+    const isCreate = s.screen === 'create', isEdit = s.screen === 'edit', isPublishing = s.screen === 'publishing';
+    const isForm = isCreate || isEdit;
+    const basicsDone = !!(s.project && s.name.trim() && s.desc.trim());
+    const sourceDone = s.method === 'container' ? true : !!(s.repo.trim() && s.entry.trim());
+    const protocolsDone = !!(s.pResp || s.pInv || s.pWs);
+    const registryDone = !!s.solution;
+    const allDone = basicsDone && sourceDone && protocolsDone && registryDone;
+
+    // wizard
+    const stepDefs = [
+      { n: 1, label: 'Basics', done: basicsDone },
+      { n: 2, label: 'Source & runtime', done: sourceDone },
+      { n: 3, label: 'Resources & protocols', done: protocolsDone },
+      { n: 4, label: 'Registry & review', done: registryDone }
+    ];
+    const stepItems = stepDefs.map(d => {
+      const on = d.n === s.step;
+      const showCheck = d.done && !on;
+      return {
+        num: String(d.n), label: d.label,
+        cls: 'step' + (on ? ' on' : (d.done ? ' done' : '')),
+        showCheck, showNum: !showCheck,
+        hasLine: d.n < 4, lineCls: 'line' + (d.done && d.n < s.step ? ' done' : ''),
+        go: () => { if (d.n <= s.maxStep) this.goStep(d.n); }
+      };
+    });
+    const curDone = stepDefs[s.step - 1].done;
+    const nextLabel = s.step < 4 ? stepDefs[s.step].label : '';
+    const stepHint = s.step < 4 ? 'Nothing is deployed until step 4.' : 'Creating publishes version 1 and provisions the agent on Foundry.';
+
+    // edit nav
+    const navDefs = [
+      { id: 'basics', label: 'Basics', optional: false },
+      { id: 'source', label: 'Source & runtime', optional: false },
+      { id: 'resources', label: 'Resources', optional: false },
+      { id: 'protocols', label: 'Protocols', optional: false },
+      { id: 'envvars', label: 'Environment variables', optional: true },
+      { id: 'registry', label: 'Solution registry', optional: false }
+    ];
+    const navItems = navDefs.map(x => ({ label: x.label, optional: x.optional, cls: 'navb' + (s.section === x.id ? ' on' : ''), go: () => this.go(x.id) }));
+
+    const branchText = (s.branch || 'main').trim() || 'main';
+    const repoText = s.repo.trim() || '[repository]';
+    const cmd = s.entry.trim() ? JSON.stringify(s.entry.trim().split(/\s+/)) : '[]';
+    const protocols = [s.pResp ? 'Responses' : '', s.pInv ? 'Invocations' : '', s.pWs ? 'Invocations_WS' : ''].filter(Boolean);
+    const reviewRows = [
+      { label: 'Basics', text: (s.name.trim() || '[name]') + ' · ' + s.type + ' · ' + s.env + ' / ' + (s.project || '[project]'), sub: s.desc.trim(), go: () => this.goStep(1) },
+      { label: 'Source & runtime', text: s.method === 'container' ? 'Container Image' : 'Source Code (GitHub repository) · ' + repoText + ' @ ' + branchText, sub: s.method === 'container' ? '' : s.runtime + ' · ' + s.dep + ' · ' + cmd, go: () => this.goStep(2) },
+      { label: 'Resources & protocols', text: s.cpu + ' · ' + s.mem, sub: (protocols.length ? protocols.join(', ') : 'No protocol selected') + ' · ' + s.envVars.length + (s.envVars.length === 1 ? ' environment variable' : ' environment variables'), go: () => this.goStep(3) }
+    ];
+    const footerHint = s.dirty ? 'Updating publishes version ' + (s.version + 1) + ' and redeploys the agent.' : 'No changes since version ' + s.version + '.';
+
+    // publishing view
+    const total = st.reduce((a, x) => a + x.ms, 0);
+    const phaseMs = [3255, 48800, 18434];
+    const sim = s.pubDone ? total : s.pubSim;
+    const phaseElapsed = [Math.min(sim, phaseMs[0]), Math.min(Math.max(sim - phaseMs[0], 0), phaseMs[1]), Math.min(Math.max(sim - phaseMs[0] - phaseMs[1], 0), phaseMs[2])];
+    const fill = phaseElapsed.map((e, i) => Math.round(e / phaseMs[i] * 100));
+    const phaseText = phaseElapsed.map((e, i) => e >= phaseMs[i] ? this.fmtMs(phaseMs[i]) : (e <= 0 ? 'pending' : this.fmtMs(e) + ' so far'));
+    let acc = 0;
+    const rows = st.map((x, i) => {
+      const startAt = acc; acc += x.ms;
+      const done = s.pubDone || i < s.stageIdx;
+      const run = !s.pubDone && i === s.stageIdx && s.pubActive;
+      const meta = x.meta.replace('BRANCH', branchText).replace('VERSION', String(s.targetVersion));
+      return {
+        name: x.name,
+        metaText: done && meta ? '· ' + meta : (run && i === 6 && s.version > 0 ? '· usually the longest stage (44.3 s last time)' : ''),
+        dur: done ? this.fmtMs(x.ms) : (run ? this.fmtMs(Math.max(0, sim - startAt)) + '…' : '—'),
+        cls: 'st' + (run ? ' run' : (done ? '' : ' wait')),
+        isDone: done, isRun: run, isWait: !done && !run
+      };
+    });
+
+    // post-provisioning tabs
+    const tab = s.tab;
+    const enabled = this.enabledProtocols();
+    const enabledProtocols = enabled.map(n => ({ name: n }));
+    const playProto = this.effProto(s.playProto);
+    const consumeProto = this.effProto(s.consumeProto);
+    const messages = s.messages.map(m => ({
+      text: m.text, meta: m.meta, raw: m.raw,
+      rowCls: 'mrow ' + (m.role === 'user' ? 'u' : 'a'),
+      bubCls: 'bub ' + (m.role === 'user' ? 'u' : 'a'),
+      showRaw: s.showRaw && m.role === 'agent'
+    }));
+    const endpoint = 'https://[gateway-host]/agents/[agent-id]';
+    const codeText = this.codeFor(consumeProto, s.codeLang);
+
+    return {
+      // tabs
+      tabConfigureCls: 'tab' + (tab === 'configure' ? ' on' : ''),
+      tabPlaygroundCls: 'tab' + (tab === 'playground' ? ' on' : ''),
+      tabConsumeCls: 'tab' + (tab === 'consume' ? ' on' : ''),
+      showConfigure: isCreate || (isEdit && tab === 'configure'),
+      showPlayground: isEdit && tab === 'playground',
+      showConsume: isEdit && tab === 'consume',
+      goConfigure: () => this.setState({ tab: 'configure' }),
+      goPlayground: () => this.setState({ tab: 'playground' }),
+      goConsume: () => this.setState({ tab: 'consume' }),
+      // playground
+      messages, noMessages: s.messages.length === 0 && !s.thinking, thinking: s.thinking, draft: s.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onDraftKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } },
+      sendDisabled: !s.draft.trim() || s.thinking,
+      sendMessage: () => this.sendMessage(),
+      clearChat: () => this.setState({ messages: [], thinking: false, lastLatency: 0 }),
+      enabledProtocols, playProto,
+      onPlayProto: (e) => this.setState({ playProto: e.target.value }),
+      showRaw: s.showRaw, rawCls: 'ck' + (s.showRaw ? ' on' : ''),
+      toggleRaw: () => this.setState({ showRaw: !s.showRaw }),
+      lastLatency: s.lastLatency ? (s.lastLatency / 1000).toFixed(1) + ' s' : '—',
+      lastLatencyNote: s.lastLatency ? 'Round trip over ' + playProto : 'No requests yet',
+      // consume
+      agentId: '[agent-id]', endpoint, consumeProto, codeText,
+      copyId: () => this.copyText('[agent-id]'),
+      copyEndpoint: () => this.copyText(endpoint),
+      copyCode: () => this.copyText(codeText),
+      segResp: consumeProto === 'Responses' ? 'on' : '', segInv: consumeProto === 'Invocations' ? 'on' : '', segWs: consumeProto === 'Invocations_WS' ? 'on' : '',
+      respOff: !s.pResp, invOff: !s.pInv, wsOff: !s.pWs,
+      pickResp: () => this.setState({ consumeProto: 'Responses' }),
+      pickInv: () => this.setState({ consumeProto: 'Invocations' }),
+      pickWs: () => this.setState({ consumeProto: 'Invocations_WS' }),
+      segCurl: s.codeLang === 'curl' ? 'on' : '', segPy: s.codeLang === 'python' ? 'on' : '', segTs: s.codeLang === 'typescript' ? 'on' : '',
+      pickCurl: () => this.setState({ codeLang: 'curl' }),
+      pickPy: () => this.setState({ codeLang: 'python' }),
+      pickTs: () => this.setState({ codeLang: 'typescript' }),
+      tryPlayground: () => this.setState({ screen: 'edit', tab: 'playground', stagesOpen: false }),
+      openPlayground: () => this.setState({ screen: s.pubActive ? 'publishing' : 'edit', tab: 'playground', section: 'basics', stagesOpen: false }),
+      // screens
+      noAgent: !s.agent, hasAgent: s.agent,
+      overlay: isForm || isPublishing, isForm, isCreate, isEdit, isPublishing, notCreate: !isCreate,
+      modalTitle: isCreate ? 'Create Agent' : (isEdit ? 'Edit Agent' : (s.version > 0 || s.pubDone ? 'Edit Agent' : 'Create Agent')),
+      nameOrPlaceholder: s.name.trim() || 'New agent',
+      bodyCls: isCreate ? 'wiz' : 'full',
+      showBasics: isEdit || s.step === 1, showSource: isEdit || s.step === 2, showResources: isEdit || s.step === 3,
+      showRegistry: isEdit || s.step === 4, showReview: isCreate && s.step === 4,
+      // wizard
+      step: s.step, stepItems, stepHint, nextLabel,
+      showBack: s.step > 1, showNext: s.step < 4, showCreate: s.step === 4,
+      nextDisabled: !curDone, createDisabled: !allDone,
+      nextStep: () => this.goStep(s.step + 1), backStep: () => this.goStep(s.step - 1),
+      reviewRows,
+      // form values
+      env: s.env, project: s.project, name: s.name, desc: s.desc, type: s.type,
+      repo: s.repo, branch: s.branch, runtime: s.runtime, dep: s.dep, entry: s.entry, cpu: s.cpu, mem: s.mem, solution: s.solution,
+      projectCls: 'in' + (s.project ? '' : ' ph'), solutionCls: 'in' + (s.solution ? '' : ' ph'),
+      isContainer: s.method === 'container', isSource: s.method === 'source',
+      rcContainer: 'rc' + (s.method === 'container' ? ' on' : ''), rcSource: 'rc' + (s.method === 'source' ? ' on' : ''),
+      pResp: s.pResp, pInv: s.pInv, pWs: s.pWs,
+      ckResp: 'ck' + (s.pResp ? ' on' : ''), ckInv: 'ck' + (s.pInv ? ' on' : ''), ckWs: 'ck' + (s.pWs ? ' on' : ''),
+      envVars: s.envVars.map((v, i) => ({
+        key: v.key, value: v.value,
+        onKey: (e) => { const a = s.envVars.slice(); a[i] = { key: e.target.value, value: a[i].value }; this.set('envVars', a); },
+        onValue: (e) => { const a = s.envVars.slice(); a[i] = { key: a[i].key, value: e.target.value }; this.set('envVars', a); },
+        remove: () => { const a = s.envVars.slice(); a.splice(i, 1); this.set('envVars', a); }
+      })),
+      noVars: s.envVars.length === 0, hasVars: s.envVars.length > 0,
+      hasSolution: !!s.solution,
+      commandText: cmd, repoText, branchText,
+      // edit nav + footer
+      navItems, footerHint, updateDisabled: !s.dirty,
+      // deployment strip
+      version: s.version, lastTotal: s.lastTotal, targetVersion: s.targetVersion,
+      stagesOpen: s.stagesOpen, stagesLabel: s.stagesOpen ? 'Hide stages' : 'View stages', chevRot: s.stagesOpen ? 180 : 0,
+      // publishing
+      pubActive: s.pubActive, pubDone: s.pubDone, pubIdle: !s.pubActive && s.version > 0,
+      pubElapsedText: this.fmtClock(sim),
+      pubTitle: s.pubDone ? 'Version ' + s.targetVersion + ' published in ' + this.fmtTotal(total) : 'Publishing version ' + s.targetVersion,
+      pubSubtitle: s.pubDone ? 'Ready · first response in 17.4 s' : ('Elapsed ' + this.fmtClock(sim) + (s.version > 0 ? ' · last deployment took ' + s.lastTotal : '')),
+      pubFooterHint: s.pubDone ? 'The agent is live. Try it in the playground, or open it to review the configuration.' : 'You can close this dialog — publishing continues, and the result lands in the deployment strip.',
+      fetchFill: fill[0], buildFill: fill[1], finalFill: fill[2],
+      fetchText: phaseText[0], buildText: phaseText[1], finalText: phaseText[2],
+      fetchRows: rows.slice(0, 5), buildRows: rows.slice(5, 7), finalRows: rows.slice(7, 9),
+      // handlers
+      startCreate: () => this.setState({ screen: 'create', tab: 'configure', step: 1, maxStep: 1, section: 'basics', messages: [], thinking: false, lastLatency: 0, dirty: false, version: 0, agent: false, lastTotal: '', pubDone: false, pubActive: false,
+        project: '', name: '', desc: '', repo: '', branch: 'main', entry: 'python main.py', pResp: false, pInv: false, pWs: false, envVars: [], solution: '', method: 'source' }),
+      openEdit: () => this.setState({ screen: s.pubActive ? 'publishing' : 'edit', tab: 'configure', section: 'basics', stagesOpen: false }),
+      closeModal: () => this.setState({ screen: 'list' }),
+      publish: () => this.startPublish(),
+      finishPublish: () => this.setState({ screen: 'edit', tab: 'configure', section: 'basics', stagesOpen: true }),
+      toggleStages: () => this.setState({ stagesOpen: !s.stagesOpen }),
+      onScroll: (e) => this.onScrollSpy(e),
+      onEnv: (e) => this.set('env', e.target.value), onProject: (e) => this.set('project', e.target.value),
+      onName: (e) => this.set('name', e.target.value), onDesc: (e) => this.set('desc', e.target.value), onType: (e) => this.set('type', e.target.value),
+      pickContainer: () => this.set('method', 'container'), pickSource: () => this.set('method', 'source'),
+      onRepo: (e) => this.set('repo', e.target.value), onBranch: (e) => this.set('branch', e.target.value),
+      onRuntime: (e) => this.set('runtime', e.target.value), onDep: (e) => this.set('dep', e.target.value), onEntry: (e) => this.set('entry', e.target.value),
+      onCpu: (e) => this.set('cpu', e.target.value), onMem: (e) => this.set('mem', e.target.value),
+      toggleResp: () => this.set('pResp', !s.pResp), toggleInv: () => this.set('pInv', !s.pInv), toggleWs: () => this.set('pWs', !s.pWs),
+      addVar: () => this.set('envVars', s.envVars.concat([{ key: '', value: '' }])),
+      onSolution: (e) => this.set('solution', e.target.value),
+      fillSample: () => this.setState({ dirty: true, maxStep: 4, project: '[Project A]', name: 'GithubSourcedAgent', desc: 'Sample hosted agent deployed from GitHub',
+        repo: '[org]/13882-sample-hosted-agent', branch: 'main', entry: 'python main.py', pResp: true, solution: '[Solution A (Tech 2)]',
+        envVars: [{ key: 'MODEL_DEPLOYMENT_NAME', value: 'gpt-4.1' }] })
+    };
+  }
+}
+</script>
+</body>
+</html>

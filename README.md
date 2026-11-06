@@ -1,4 +1,4 @@
-# Clickable prototype · wizard Create → publish → Edit → Playground Consume (press Play) — design reference
+# Clickable prototype · wizard Create (pick a release) → publish → Edit → Playground Consume (press Pl — design reference
 
 This is a design mockup created in a visual design tool, exported as a
 standalone page. Treat it as a REFERENCE MOCKUP, not production code:
